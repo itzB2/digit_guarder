@@ -1,3 +1,7 @@
 from django.db import models
+from jsonfield import JSONField
 
-# Create your models here.
+
+class UserData(models.Model):
+    uid = models.BigIntegerField()
+    passwords = JSONField()

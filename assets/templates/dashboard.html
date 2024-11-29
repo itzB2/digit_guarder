@@ -5,10 +5,47 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/3.1.2/rollups/aes.js"
+        integrity="sha256-/H4YS+7aYb9kJ5OKhFYPUjSJdrtV6AeyJOtTkw6X72o=" crossorigin="anonymous"></script>
 </head>
 
-<body>
 
+
+<body>
+    <form action="{% url 'logout' %}">
+        <input type="submit" value="Logout" />
+    </form>
+
+    <form id="passwordAddition">
+        <label for="site">Site: </label><br>
+        <input type="text" id="site" name="site"><br>
+        <label for="pass">Password:</label><br>
+        <input type="text" id="pass" name="pass">
+        <button type="submit">Push</button>
+    </form>
+
+    <ul>
+        {% for site,password in passwords.items %}
+
+        <li>{{ site }} : {{ password }}</li>
+
+        {% endfor %}
+    </ul>
 </body>
+
+<script>
+    var form = document.getElementById("passwordAddition");
+
+    form.addEventListener("submit", makePasswordPostCall)
+
+    function makePasswordPostCall(event) {
+        var site = document.getElementById("passwordAddition").elements.namedItem("site").value;
+        var password = document.getElementById("passwordAddition").elements.namedItem("pass").value;
+
+        var encryptedPassword = CryptoJS.AES.encrypt(password, "skibidi");
+
+        event.preventDefault();
+    }
+</script>
 
 </html>
