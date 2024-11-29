@@ -5,10 +5,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/3.1.2/rollups/aes.js"
-        integrity="sha256-/H4YS+7aYb9kJ5OKhFYPUjSJdrtV6AeyJOtTkw6X72o=" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js" integrity="sha512-E8QSvWZ0eCLGk4km3hxSsNmGWbLtSCSUcewDQPQWZF6pEU8GlT8a5fF32wOl1i8ftdMhssTrF/OhyGWwonTcXA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 </head>
 
+{{ password|json_script:"key" }}
 
 
 <body>
@@ -38,11 +38,70 @@
 
     form.addEventListener("submit", makePasswordPostCall)
 
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                // Does this cookie string begin with the name we want?
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+
     function makePasswordPostCall(event) {
         var site = document.getElementById("passwordAddition").elements.namedItem("site").value;
         var password = document.getElementById("passwordAddition").elements.namedItem("pass").value;
 
-        var encryptedPassword = CryptoJS.AES.encrypt(password, "skibidi");
+        var key = JSON.parse(document.getElementById('key').textContent);
+
+        const csrftoken = getCookie('csrftoken');
+
+        // Generate necessary secrets for aes encryption
+        var _iv = CryptoJS.lib.WordArray.random(16);
+        var _salt = CryptoJS.lib.WordArray.random(16);
+        var paddedKey = CryptoJS.PBKDF2(key, _salt, { keySize: 256 / 32, iterations: 1000 });
+
+        // Encrypt the data
+        var message = "a";
+        var encrypted = CryptoJS.AES.encrypt(message, paddedKey, { iv: _iv });
+
+        // Convert the encrypted data to a string to be stored
+        const cipher = encrypted.ciphertext.toString(CryptoJS.enc.Base64)
+        const salt = _salt.toString(CryptoJS.enc.Base64)
+        const iv = _iv.toString(CryptoJS.enc.Base64);
+
+        const payload = {
+            salt: salt,
+            iv: iv,
+            cipher: cipher
+        }
+
+        {% comment %} fetch("/api/passwords/", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "X-CSRFToken": csrfToken
+            },
+            body: JSON.stringify(payload)
+          })
+            .then(response => {
+              if (!response.ok) {
+                throw new Error("Failed to send request");
+              }
+              return response.json();
+            })
+            .then(data => {
+              console.log("Server Response:", data);
+            })
+            .catch(error => {
+              console.error("Error:", error);
+            }); {% endcomment %}
 
         event.preventDefault();
     }

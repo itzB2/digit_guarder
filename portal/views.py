@@ -16,7 +16,7 @@ from .seralizers import UserDataSerializer
 
 import requests
 
-    
+from . import utils
 
 @api_view(['POST', 'GET'])
 @csrf_exempt
@@ -24,7 +24,6 @@ def passwords(request):
     data = JSONParser().parse(request)
     uid = data["uid"]
     user_data, exits = UserData.objects.get_or_create(uid=uid, defaults={"uid":uid, "passwords":{}})
-
 
     #Get passwords, respond
     if request.method == "GET":
@@ -34,16 +33,17 @@ def passwords(request):
 
     #Push a password onto user data
     if request.method == "POST":
-        site = data["site"]
-        encryptedPassword = data["password"] #Password is sent from the client pre encrypted
+        print(data)
+        # site = data["site"]
+        # encryptedPassword = data["password"] #Password is sent from the client pre encrypted
 
-        user_data.passwords[site] = encryptedPassword
+        # user_data.passwords[site] = encryptedPassword
 
-        user_data.save()
+        # user_data.save()
 
-        serialize = UserDataSerializer(user_data)
+        # serialize = UserDataSerializer(user_data)
 
-        return JsonResponse(serialize.data, status = 201)
+        return JsonResponse({}, status = 201)
 
 @login_required
 def dashboard(request):
@@ -56,9 +56,11 @@ def dashboard(request):
 
     passwords = json.loads(response_json["passwords"])
 
-    # print(passwords)
+    print(request.user.password)
 
-    return render(request, "dashboard.html")
+    # utils.decryptPassword(passwords, request.user.password)
+
+    return render(request, "dashboard.html", {"password":"pass"})
 
 def signup(request):
     form = UserCreationForm()
