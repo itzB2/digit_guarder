@@ -11,7 +11,8 @@ from .seralizers import UserDataSerializer
 def passwords(request):
 
     match request.method:
-        #Get user data, if user doesnt exist, create a new one
+        # Get user data, if user doesnt exist, create a new one
+        # Response is the user object as json
         case "GET":
             data = JSONParser().parse(request)
             uid = data["uid"]
@@ -20,6 +21,8 @@ def passwords(request):
             serialize = UserDataSerializer(user_data)
             return JsonResponse(serialize.data, status = 200)
         
+        # Request consists of the uid, site and password (in aes encryption)
+        # If user doesnt exist, creates one
         case "POST":
             data = request.data #JsonParser doesnt work when the request is from js for some reason
 
@@ -32,7 +35,7 @@ def passwords(request):
                 iv = data["iv"]
                 cipher = data["cipher"]
 
-                user_data.passwords[site] = {
+                user_data.passwords[site] = { # Adds the password to the data
                     "salt":salt,
                     "iv":iv,
                     "cipher": cipher
@@ -40,11 +43,12 @@ def passwords(request):
 
                 user_data.save()
 
-                serialize = UserDataSerializer(user_data)
                 return JsonResponse({'sucess':'entry added'}, status = 201)
             except:
                 return JsonResponse({'error':'bad request, request must contain \'uid\',\'site\',\'salt\',\'iv\',\'cipher\''}, status=400)
         
+        # Requests consists of uid and the site to be deleted
+        # Responds with 404 if user doesnt exist
         case "DELETE":
             data = request.data
             try:
@@ -57,7 +61,7 @@ def passwords(request):
                     return JsonResponse({'error':'user doesnt exist'},status=404)
                 
                 user_data = UserData.objects.get(uid=uid)
-                del user_data.passwords[site]
+                del user_data.passwords[site] #Deletes the corresponding site
                 user_data.save()
             except:
                 return JsonResponse({'error':'bad request, request must contain \'uid\',\'site\''}, status=400)

@@ -1,3 +1,4 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="en">
 
@@ -8,51 +9,81 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"
         integrity="sha512-E8QSvWZ0eCLGk4km3hxSsNmGWbLtSCSUcewDQPQWZF6pEU8GlT8a5fF32wOl1i8ftdMhssTrF/OhyGWwonTcXA=="
         crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+
+    <link rel="stylesheet" href="{% static 'index.css' %}">
 </head>
 
 {{ password|json_script:"key" }}
 {{ uid|json_script:"uid" }}
+{{ passwords|json_script:"passwords"}}
 
 
 <body>
-    <form action="{% url 'logout' %}">
-        <input type="submit" value="Logout" />
-    </form>
+    <div id="header">
+        <p>{{ uname }}</p>
+        <form action="{% url 'logout' %}">
+            <input type="submit" value="Logout" />
+        </form>
+    </div>
 
-    <form id="passwordAddition">
-        <label for="site">Site: </label><br>
-        <input type="text" id="site" name="site"><br>
-        <label for="pass">Password:</label><br>
-        <input type="text" id="pass" name="pass">
-        <button type="submit">Push</button>
-    </form>
 
-    <ul id="passwords">
-        {% for site,password in passwords.items %}
 
-        <li class="password">
-            <div>
-                <p class="item" id="{{ site }}">{{ site }} : {{ password }}</p>
-                <button class="passwordDelete" id="{{ site }}" onclick="passwordDelete({{ site }})"
-                    name="button">Delete</button>
-            </div>
-        </li>
+    <dialog id="passwordDialog" class="modal">
+        <div class="alignRight"><button>×</button></div>
+        <form id="passwordAddition">
+            <label for="site">Site: </label><br>
+            <input type="text" id="site" name="site"><br>
+            <label for="uname">Username: </label><br>
+            <input type="text" id="uname" name="uname"><br>
+            <label for="pass">Password:</label><br>
+            <input type="text" id="pass" name="pass">
+            <button>Push</button>
+        </form>
+    </dialog>
 
-        {% endfor %}
-    </ul>
+    <div id="passwordsContainer">
+        <div id="head">
+            <h1>Saved Passwords: </h1>
+            <button id="addPassword">+</button>
+        </div>
+
+        <ul id="passwords">
+            {% for site,password in passwords.items %}
+            <li class="password">
+                <div>
+                    <p class="item" id="{{ site }}">{{ site }}</p>
+                    <button class="passwordDelete" id="{{ site }}" name="button">Delete</button>
+                </div>
+            </li>
+            {% endfor %}
+        </ul>
+    </div>
 </body>
 
 <script>
-    var form = document.getElementById("passwordAddition");
+    const dialog = document.getElementById("passwordDialog");
+    const form = document.getElementById("passwordAddition");
+    const closeBtn = document.querySelector("dialog button");
+
+    const addBtn = document.getElementById("addPassword");
     var items = document.getElementsByClassName("item");
 
-    form.addEventListener("submit", makePasswordPostCall)
+    form.addEventListener("submit", makePasswordPostCall);
+    // addBtn.addEventListener("submit", addPassword);
 
     for (var i = 0; i < items.length; i++) {
         items[i].addEventListener("click", passwordSelected);
     }
 
+    // "Show the dialog" button opens the dialog modally
+    addBtn.addEventListener("click", () => {
+        dialog.showModal();
+    });
 
+    // "Close" button closes the dialog
+    closeBtn.addEventListener("click", () => {
+        dialog.close();
+    });
 
     function getCookie(name) {
         let cookieValue = null;
@@ -118,12 +149,13 @@
         event.preventDefault();
     }
 
-    function passwordSelected(event) {
-        const site = event.target.innerHTML.split(" : ")[0];
-        const password = event.target.innerHTML.split(" : ")[1];
+    function addPassword(event) {
 
-        form.elements.namedItem("site").value = site;
-        form.elements.namedItem("pass").value = password;
+    }
+
+    function passwordSelected(event) {
+        var key = JSON.parse(document.getElementById('passwords').textContent);
+        const site = event.namedItem("button").attributes.id.value;
     }
 
     function passwordDelete(event) {

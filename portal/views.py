@@ -24,7 +24,7 @@ def dashboard(request):
         password_entries = data["passwords"].replace("\'", "\"")
         passkey = utils.decryptPassword(json.loads(password_entries), request.user.password)
 
-    return render(request, "dashboard.html", {"password":request.user.password, "uid":request.user.id,"passwords":passkey})
+    return render(request, "dashboard.html", {"password":request.user.password, "uid":request.user.id,"passwords":passkey, "uname":request.user.username})
 
 def signup(request):
     form = UserCreationForm()
