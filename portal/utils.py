@@ -22,14 +22,14 @@ def decryptPassword(passwords, key):
     decrypted = {}
 
     for item in passwords.items():
-        site, encryptedPass = item
-
+        site, body = item
+        encryptedPass = body["password"]
         cipher = encryptedPass["cipher"]
         salt = encryptedPass["salt"]
         iv = encryptedPass["iv"]
 
         password = decryptAES(cipher, key, salt, iv)
 
-        decrypted[site] = password
+        decrypted[site] = {"password":password, "uname": body["uname"]}
     
     return decrypted

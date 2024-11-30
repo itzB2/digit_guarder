@@ -30,14 +30,43 @@
 
     <dialog id="passwordDialog" class="modal">
         <div class="alignRight"><button>×</button></div>
-        <form id="passwordAddition">
+        <form id="passwordAddition" autocomplete="off">
             <label for="site">Site: </label><br>
             <input type="text" id="site" name="site"><br>
             <label for="uname">Username: </label><br>
             <input type="text" id="uname" name="uname"><br>
             <label for="pass">Password:</label><br>
-            <input type="text" id="pass" name="pass">
-            <button>Push</button>
+            <div class="hidablePass">
+                <input type="password" id="pass" name="pass">
+                <label class="eye">
+                    <input type="checkbox" onclick="showpass()" />
+
+                    <span class="checked">
+                        <svg id="open" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
+                            viewBox="0 0 16 16">
+                            <path
+                                d="M16 8s-3-5.5-8-5.5S0 8 0 8s3 5.5 8 5.5S16 8 16 8M1.173 8a13 13 0 0 1 1.66-2.043C4.12 4.668 5.88 3.5 8 3.5s3.879 1.168 5.168 2.457A13 13 0 0 1 14.828 8q-.086.13-.195.288c-.335.48-.83 1.12-1.465 1.755C11.879 11.332 10.119 12.5 8 12.5s-3.879-1.168-5.168-2.457A13 13 0 0 1 1.172 8z" />
+                            <path
+                                d="M8 5.5a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5M4.5 8a3.5 3.5 0 1 1 7 0 3.5 3.5 0 0 1-7 0" />
+                        </svg>
+                    </span>
+                    <span class="unchecked">
+                        <svg id="close" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
+                            viewBox="0 0 16 16">
+                            <path
+                                d="M13.359 11.238C15.06 9.72 16 8 16 8s-3-5.5-8-5.5a7 7 0 0 0-2.79.588l.77.771A6 6 0 0 1 8 3.5c2.12 0 3.879 1.168 5.168 2.457A13 13 0 0 1 14.828 8q-.086.13-.195.288c-.335.48-.83 1.12-1.465 1.755q-.247.248-.517.486z" />
+                            <path
+                                d="M11.297 9.176a3.5 3.5 0 0 0-4.474-4.474l.823.823a2.5 2.5 0 0 1 2.829 2.829zm-2.943 1.299.822.822a3.5 3.5 0 0 1-4.474-4.474l.823.823a2.5 2.5 0 0 0 2.829 2.829" />
+                            <path
+                                d="M3.35 5.47q-.27.24-.518.487A13 13 0 0 0 1.172 8l.195.288c.335.48.83 1.12 1.465 1.755C4.121 11.332 5.881 12.5 8 12.5c.716 0 1.39-.133 2.02-.36l.77.772A7 7 0 0 1 8 13.5C3 13.5 0 8 0 8s.939-1.721 2.641-3.238l.708.709zm10.296 8.884-12-12 .708-.708 12 12z" />
+                        </svg>
+                    </span>
+                </label>
+            </div>
+            <div>
+                <button id="formSubmit">Add</button>
+                <button class="deleteBtn" id="deleteEntry">Delete</button>
+            </div>
         </form>
     </dialog>
 
@@ -52,7 +81,6 @@
             <li class="password">
                 <div>
                     <p class="item" id="{{ site }}">{{ site }}</p>
-                    <button class="passwordDelete" id="{{ site }}" name="button">Delete</button>
                 </div>
             </li>
             {% endfor %}
@@ -66,24 +94,52 @@
     const closeBtn = document.querySelector("dialog button");
 
     const addBtn = document.getElementById("addPassword");
+    const updateBtn = document.getElementById("formSubmit");
+    const deleteBtn = document.getElementById("deleteEntry");
+
     var items = document.getElementsByClassName("item");
 
-    form.addEventListener("submit", makePasswordPostCall);
-    // addBtn.addEventListener("submit", addPassword);
+    form.addEventListener("submit", addPassword);
 
     for (var i = 0; i < items.length; i++) {
         items[i].addEventListener("click", passwordSelected);
     }
 
-    // "Show the dialog" button opens the dialog modally
     addBtn.addEventListener("click", () => {
         dialog.showModal();
     });
 
-    // "Close" button closes the dialog
     closeBtn.addEventListener("click", () => {
+        form.elements.namedItem("site").value = "";
+        form.elements.namedItem("pass").value = "";
+        form.elements.namedItem("uname").value = "";
+
+        updateBtn.textContent = "Add";
+
+        deleteBtn.style.visibility = "hidden";
+
         dialog.close();
     });
+
+    deleteBtn.addEventListener("click", () => {
+        passwordDelete(form.elements.namedItem("site").value);
+    })
+
+    function showpass() {
+        var field = document.getElementById("pass");
+        var open = document.getElementById("open");
+        var close = document.getElementById("close");
+
+        if (field.type === "password") {
+            open.style.visibility = "visible";
+            close.style.visibility = "hidden";
+            field.type = "text";
+        } else {
+            close.style.visibility = "visible";
+            open.style.visibility = "hidden";
+            field.type = "password";
+        }
+    }
 
     function getCookie(name) {
         let cookieValue = null;
@@ -101,9 +157,11 @@
         return cookieValue;
     }
 
-    function makePasswordPostCall(event) {
+    function addPassword(event) {
+
         var site = form.elements.namedItem("site").value;
         var password = form.elements.namedItem("pass").value;
+        var uname = form.elements.namedItem("uname").value;
 
         var key = JSON.parse(document.getElementById('key').textContent);
         var _uid = JSON.parse(document.getElementById('uid').textContent);
@@ -124,6 +182,7 @@
 
         const payload = JSON.stringify({
             "site": site,
+            "uname": uname,
             "uid": _uid,
             "salt": salt,
             "iv": iv,
@@ -143,23 +202,33 @@
         };
 
         fetch("http://localhost:8000/api/passwords/", requestOptions)
+            .then((response) => location.reload())
             .catch((error) => console.error(error));
 
-        location.reload();
         event.preventDefault();
-    }
-
-    function addPassword(event) {
 
     }
 
     function passwordSelected(event) {
-        var key = JSON.parse(document.getElementById('passwords').textContent);
-        const site = event.namedItem("button").attributes.id.value;
+        var passwords = JSON.parse(document.getElementById('passwords').textContent);
+        const site = event.target.attributes.id.value;
+
+        var username = passwords[site]["uname"];
+        var password = passwords[site]["password"];
+
+        dialog.showModal();
+
+        form.elements.namedItem("site").value = site;
+        form.elements.namedItem("site").disabled = true;
+
+        form.elements.namedItem("pass").value = password;
+        form.elements.namedItem("uname").value = username;
+
+        updateBtn.textContent = "Update";
+        deleteBtn.style.visibility = "visible";
     }
 
-    function passwordDelete(event) {
-        const site = event.namedItem("button").attributes.id.value;
+    function passwordDelete(site) {
         const _uid = JSON.parse(document.getElementById('uid').textContent);
 
         const csrftoken = getCookie('csrftoken');
@@ -180,10 +249,15 @@
             redirect: "follow"
         };
 
+        console.log(payload);
+
         fetch("http://localhost:8000/api/passwords/", requestOptions)
+            .then((response) => {
+                console.log(response);
+                // location.reload();
+            })
             .catch((error) => console.error(error));
 
-        location.reload();
     }
 </script>
 

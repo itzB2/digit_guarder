@@ -30,22 +30,26 @@ def passwords(request):
                 uid = data["uid"]
                 user_data, exits = UserData.objects.get_or_create(uid=uid, defaults={"uid":uid, "passwords":{}})                
                 site = data["site"]
+                uname = data["uname"]
                 #Password is sent from the client pre encrypted
                 salt = data["salt"]
                 iv = data["iv"]
                 cipher = data["cipher"]
 
                 user_data.passwords[site] = { # Adds the password to the data
-                    "salt":salt,
-                    "iv":iv,
-                    "cipher": cipher
+                    "password":{
+                        "salt":salt,
+                        "iv":iv,
+                        "cipher": cipher
+                    },
+                    "uname":uname
                 }
 
                 user_data.save()
 
                 return JsonResponse({'sucess':'entry added'}, status = 201)
             except:
-                return JsonResponse({'error':'bad request, request must contain \'uid\',\'site\',\'salt\',\'iv\',\'cipher\''}, status=400)
+                return JsonResponse({'error':'bad request, request must contain \'uid\',\'site\',\'salt\',\'iv\',\'cipher\',\'uname\''}, status=400)
         
         # Requests consists of uid and the site to be deleted
         # Responds with 404 if user doesnt exist
@@ -63,8 +67,9 @@ def passwords(request):
                 user_data = UserData.objects.get(uid=uid)
                 del user_data.passwords[site] #Deletes the corresponding site
                 user_data.save()
+                print(user_data.passwords)
             except:
-                return JsonResponse({'error':'bad request, request must contain \'uid\',\'site\''}, status=400)
+                return JsonResponse({'error':'bad request, check \'uid\',\'site\'; or site doesnt exist'}, status=400)
 
             return JsonResponse({'sucess':'entry deleted'}, status = 204)
 
