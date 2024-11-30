@@ -67,7 +67,7 @@ def passwords(request):
                 user_data = UserData.objects.get(uid=uid)
                 del user_data.passwords[site] #Deletes the corresponding site
                 user_data.save()
-                print(user_data.passwords)
+                
             except:
                 return JsonResponse({'error':'bad request, check \'uid\',\'site\'; or site doesnt exist'}, status=400)
 

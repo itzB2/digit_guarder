@@ -65,7 +65,7 @@
             </div>
             <div>
                 <button id="formSubmit">Add</button>
-                <button class="deleteBtn" id="deleteEntry">Delete</button>
+                <button class="deleteBtn" id="deleteEntry" style="visibility: hidden;">Delete</button>
             </div>
         </form>
     </dialog>
@@ -99,7 +99,7 @@
 
     var items = document.getElementsByClassName("item");
 
-    form.addEventListener("submit", addPassword);
+    form.addEventListener("submit", (event) => event.preventDefault());
 
     for (var i = 0; i < items.length; i++) {
         items[i].addEventListener("click", passwordSelected);
@@ -123,6 +123,10 @@
 
     deleteBtn.addEventListener("click", () => {
         passwordDelete(form.elements.namedItem("site").value);
+    })
+
+    updateBtn.addEventListener("click", () => {
+        addPassword();
     })
 
     function showpass() {
@@ -157,7 +161,7 @@
         return cookieValue;
     }
 
-    function addPassword(event) {
+    function addPassword() {
 
         var site = form.elements.namedItem("site").value;
         var password = form.elements.namedItem("pass").value;
@@ -252,10 +256,7 @@
         console.log(payload);
 
         fetch("http://localhost:8000/api/passwords/", requestOptions)
-            .then((response) => {
-                console.log(response);
-                // location.reload();
-            })
+            .then((response) => location.reload())
             .catch((error) => console.error(error));
 
     }
