@@ -5,10 +5,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js" integrity="sha512-E8QSvWZ0eCLGk4km3hxSsNmGWbLtSCSUcewDQPQWZF6pEU8GlT8a5fF32wOl1i8ftdMhssTrF/OhyGWwonTcXA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"
+        integrity="sha512-E8QSvWZ0eCLGk4km3hxSsNmGWbLtSCSUcewDQPQWZF6pEU8GlT8a5fF32wOl1i8ftdMhssTrF/OhyGWwonTcXA=="
+        crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 </head>
 
 {{ password|json_script:"key" }}
+{{ uid|json_script:"uid" }}
 
 
 <body>
@@ -24,10 +27,16 @@
         <button type="submit">Push</button>
     </form>
 
-    <ul>
+    <ul id="passwords">
         {% for site,password in passwords.items %}
 
-        <li>{{ site }} : {{ password }}</li>
+        <li class="password">
+            <div>
+                <p class="item" id="{{ site }}">{{ site }} : {{ password }}</p>
+                <button class="passwordDelete" id="{{ site }}" onclick="passwordDelete({{ site }})"
+                    name="button">Delete</button>
+            </div>
+        </li>
 
         {% endfor %}
     </ul>
@@ -35,8 +44,15 @@
 
 <script>
     var form = document.getElementById("passwordAddition");
+    var items = document.getElementsByClassName("item");
 
     form.addEventListener("submit", makePasswordPostCall)
+
+    for (var i = 0; i < items.length; i++) {
+        items[i].addEventListener("click", passwordSelected);
+    }
+
+
 
     function getCookie(name) {
         let cookieValue = null;
@@ -55,10 +71,11 @@
     }
 
     function makePasswordPostCall(event) {
-        var site = document.getElementById("passwordAddition").elements.namedItem("site").value;
-        var password = document.getElementById("passwordAddition").elements.namedItem("pass").value;
+        var site = form.elements.namedItem("site").value;
+        var password = form.elements.namedItem("pass").value;
 
         var key = JSON.parse(document.getElementById('key').textContent);
+        var _uid = JSON.parse(document.getElementById('uid').textContent);
 
         const csrftoken = getCookie('csrftoken');
 
@@ -67,43 +84,74 @@
         var _salt = CryptoJS.lib.WordArray.random(16);
         var paddedKey = CryptoJS.PBKDF2(key, _salt, { keySize: 256 / 32, iterations: 1000 });
 
-        // Encrypt the data
-        var message = "a";
-        var encrypted = CryptoJS.AES.encrypt(message, paddedKey, { iv: _iv });
+        var encrypted = CryptoJS.AES.encrypt(password, paddedKey, { iv: _iv });
 
         // Convert the encrypted data to a string to be stored
         const cipher = encrypted.ciphertext.toString(CryptoJS.enc.Base64)
         const salt = _salt.toString(CryptoJS.enc.Base64)
         const iv = _iv.toString(CryptoJS.enc.Base64);
 
-        const payload = {
-            salt: salt,
-            iv: iv,
-            cipher: cipher
-        }
+        const payload = JSON.stringify({
+            "site": site,
+            "uid": _uid,
+            "salt": salt,
+            "iv": iv,
+            "cipher": cipher
+        });
 
-        {% comment %} fetch("/api/passwords/", {
+
+        const myHeaders = new Headers();
+        myHeaders.append("Content-Type", "application/json");
+        myHeaders.append("X-CSRFToken", csrftoken);
+
+        const requestOptions = {
             method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              "X-CSRFToken": csrfToken
-            },
-            body: JSON.stringify(payload)
-          })
-            .then(response => {
-              if (!response.ok) {
-                throw new Error("Failed to send request");
-              }
-              return response.json();
-            })
-            .then(data => {
-              console.log("Server Response:", data);
-            })
-            .catch(error => {
-              console.error("Error:", error);
-            }); {% endcomment %}
+            headers: myHeaders,
+            body: payload,
+            redirect: "follow"
+        };
 
+        fetch("http://localhost:8000/api/passwords/", requestOptions)
+            .catch((error) => console.error(error));
+
+        location.reload();
         event.preventDefault();
+    }
+
+    function passwordSelected(event) {
+        const site = event.target.innerHTML.split(" : ")[0];
+        const password = event.target.innerHTML.split(" : ")[1];
+
+        form.elements.namedItem("site").value = site;
+        form.elements.namedItem("pass").value = password;
+    }
+
+    function passwordDelete(event) {
+        const site = event.namedItem("button").attributes.id.value;
+        const _uid = JSON.parse(document.getElementById('uid').textContent);
+
+        const csrftoken = getCookie('csrftoken');
+
+        const myHeaders = new Headers();
+        myHeaders.append("Content-Type", "application/json");
+        myHeaders.append("X-CSRFToken", csrftoken);
+
+        const payload = JSON.stringify({
+            "uid": _uid,
+            "site": site
+        });
+
+        const requestOptions = {
+            method: "DELETE",
+            headers: myHeaders,
+            body: payload,
+            redirect: "follow"
+        };
+
+        fetch("http://localhost:8000/api/passwords/", requestOptions)
+            .catch((error) => console.error(error));
+
+        location.reload();
     }
 </script>
 

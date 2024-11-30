@@ -28,7 +28,7 @@ def decryptPassword(passwords, key):
         salt = encryptedPass["salt"]
         iv = encryptedPass["iv"]
 
-        password = decryptPassword(cipher, key, salt, iv)
+        password = decryptAES(cipher, key, salt, iv)
 
         decrypted[site] = password
     
