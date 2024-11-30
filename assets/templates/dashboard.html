@@ -99,16 +99,21 @@
 
     var items = document.getElementsByClassName("item");
 
+    // Prevent the usual behaviour of form submission (which is put the fields in the url)
     form.addEventListener("submit", (event) => event.preventDefault());
 
+    // For ever password entry add dialog opening
     for (var i = 0; i < items.length; i++) {
         items[i].addEventListener("click", passwordSelected);
     }
 
+    // When new password is to be add show dialog
     addBtn.addEventListener("click", () => {
         dialog.showModal();
     });
 
+    // When close button is pressed close the dialog
+    // reset the content to match the state of the dialog when a new entry is added
     closeBtn.addEventListener("click", () => {
         form.elements.namedItem("site").value = "";
         form.elements.namedItem("pass").value = "";
@@ -121,14 +126,18 @@
         dialog.close();
     });
 
+    // Called when the delete button is pressed
     deleteBtn.addEventListener("click", () => {
         passwordDelete(form.elements.namedItem("site").value);
     })
 
+    // Since the form submisson is turned off (it recognises both the delete and add button as submisson)
+    // This gets called when add or update is pressed
     updateBtn.addEventListener("click", () => {
         addPassword();
     })
 
+    // Used for the password label
     function showpass() {
         var field = document.getElementById("pass");
         var open = document.getElementById("open");
@@ -145,6 +154,8 @@
         }
     }
 
+    // Used to get the csrf token
+    // Ripped from the django docs
     function getCookie(name) {
         let cookieValue = null;
         if (document.cookie && document.cookie !== '') {
@@ -161,6 +172,28 @@
         return cookieValue;
     }
 
+    // Called when a entry is pressed this gets called 
+    // Opens the model sets the values of the inputs
+    function passwordSelected(event) {
+        var passwords = JSON.parse(document.getElementById('passwords').textContent);
+        const site = event.target.attributes.id.value;
+
+        var username = passwords[site]["uname"];
+        var password = passwords[site]["password"];
+
+        dialog.showModal();
+
+        form.elements.namedItem("site").value = site;
+        form.elements.namedItem("site").disabled = true;
+
+        form.elements.namedItem("pass").value = password;
+        form.elements.namedItem("uname").value = username;
+
+        updateBtn.textContent = "Update";
+        deleteBtn.style.visibility = "visible";
+    }
+
+    // Post request to add the password
     function addPassword() {
 
         var site = form.elements.namedItem("site").value;
@@ -213,25 +246,7 @@
 
     }
 
-    function passwordSelected(event) {
-        var passwords = JSON.parse(document.getElementById('passwords').textContent);
-        const site = event.target.attributes.id.value;
-
-        var username = passwords[site]["uname"];
-        var password = passwords[site]["password"];
-
-        dialog.showModal();
-
-        form.elements.namedItem("site").value = site;
-        form.elements.namedItem("site").disabled = true;
-
-        form.elements.namedItem("pass").value = password;
-        form.elements.namedItem("uname").value = username;
-
-        updateBtn.textContent = "Update";
-        deleteBtn.style.visibility = "visible";
-    }
-
+    // Delete request to delete the password
     function passwordDelete(site) {
         const _uid = JSON.parse(document.getElementById('uid').textContent);
 
